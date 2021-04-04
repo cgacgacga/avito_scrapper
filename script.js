@@ -21,13 +21,13 @@ const dateSelector = '.title-info-metadata-item-redesign';
 const advertSelector = '.link-link-39EVK.link-design-default-2sPEv.title-root-395AQ.iva-item-title-1Rmmj.title-list-1IIB_.title-root_maxHeight-3obWc';
 const hrefSelector = 'href';
 
-selectors.titleSelector = titleSelector;
-selectors.descriptionSelector = descriptionSelector;
-selectors.priceSelector = priceSelector;
-selectors.sellerNameSelector = sellerNameSelector;
-selectors.dateSelector = dateSelector;
-selectors.advertSelector = advertSelector;
-selectors.hrefSelector = hrefSelector;
+selectors.title = titleSelector;
+selectors.description = descriptionSelector;
+selectors.price = priceSelector;
+selectors.sellerName = sellerNameSelector;
+selectors.date = dateSelector;
+selectors.advert = advertSelector;
+selectors.href = hrefSelector;
 
 /**
  * Function parses single advertisement page and puts data in a json
@@ -37,21 +37,20 @@ selectors.hrefSelector = hrefSelector;
 async function scrapSinglePage(subUrl) {
     console.log("scrapping page " + subUrl);
     const browser = await puppeteer.launch({headless: true});
-    const page = await browser.newPage();
+    const singleAdvertPage = await browser.newPage();
 
-    await page.goto(subUrl, {
+    await singleAdvertPage.goto(subUrl, {
         waitUntil: waitUntilSettings
     });
-    await page.setViewport({width: 1000, height: 500});
 
-    let result = await page.evaluate((subUrl, selectors) => {
+    let result = await singleAdvertPage.evaluate((subUrl, selectors) => {
         let curAdvert = {};
-        curAdvert.title = document.querySelector(selectors.titleSelector).innerText;
-        curAdvert.description = document.querySelector(selectors.descriptionSelector).innerText;
+        curAdvert.title = document.querySelector(selectors.title).innerText;
+        curAdvert.description = document.querySelector(selectors.description).innerText;
         curAdvert.url = subUrl;
-        curAdvert.price = document.querySelector(selectors.priceSelector).innerText;
-        curAdvert.author = document.querySelector(selectors.sellerNameSelector).innerText;
-        curAdvert.date = document.querySelector(selectors.dateSelector).innerText;
+        curAdvert.price = document.querySelector(selectors.price).innerText;
+        curAdvert.author = document.querySelector(selectors.sellerName).innerText;
+        curAdvert.date = document.querySelector(selectors.date).innerText;
         //Need to register
         //curAdvert.phone;
 
@@ -71,22 +70,22 @@ async function scrapSinglePage(subUrl) {
  */
 async function scrapMainUrl(mainUrl) {
     const browser = await puppeteer.launch({headless: true});
-    const page = await browser.newPage();
-    await page.goto(mainUrl, {
+    const mainUrlPage = await browser.newPage();
+    await mainUrlPage.goto(mainUrl, {
         waitUntil: waitUntilSettings
     });
-    await page.setViewport({width: 1000, height: 500});
 
-    let subUrls = await page.evaluate((mainUrl, selectors) => {
-        let q = document.querySelectorAll(selectors.advertSelector);
+    await mainUrlPage.setViewport({width: 1000, height: 500});
+
+    let subUrls = await mainUrlPage.evaluate((mainUrl, selectors) => {
+        let q = document.querySelectorAll(selectors.advert);
         let responses = [];
         for (let i = 0; i < q.length; i++) {
             let curAdvert = q[i];
-            responses.push(curAdvert.getAttribute(selectors.hrefSelector));
+            responses.push(curAdvert.getAttribute(selectors.href));
         }
         return responses;
     }, mainUrl, selectors);
-
     let responses = [];
 
     for (let i = 0; i < Math.min(amountOfAdverts, subUrls.length); i++) {
